@@ -27,8 +27,9 @@ class Book(db.Model):
         return Book.json(Book.query.filter_by(isbn=_isbn).first())
 
     def delete_book(_isbn):
-        Book.query.filter_by(isbn=_isbn).delete()
+        is_successful = Book.query.filter_by(isbn=_isbn).delete()
         db.session.commit()
+        return bool(is_successful)
 
     def update_book_price(_isbn, _price):
         book_to_update = Book.query.filter_by(isbn=_isbn).first()
