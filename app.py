@@ -3,6 +3,7 @@ from BookModel import *
 from settings import *
 import json
 import jwt, datetime
+from UserModel import *
 
 app.config['SECRET_KEY'] = 'meow'
 
@@ -12,11 +13,22 @@ def validBookObject(bookObject):
     else:
         return False
 
-@app.route('/login')
+@app.route('/login', methods=['POST'])
 def get_token():
-    expiration_date = datetime.datetime.utcnow() + datetime.timedelta(seconds=100)
-    token = jwt.encode({'exp' : expiration_date}, app.config['SECRET_KEY'], algorithm='HS256')
-    return token
+    request_data = request.get_json()
+    username = str(request_data['username'])
+    password = str(request_data['password'])
+
+    match = User.username_password_match(username, password)
+
+    if match:
+        expiration_date = datetime.datetime.utcnow() + datetime.timedelta(seconds=100)
+        token = jwt.encode({'exp' : expiration_date}, app.config['SECRET_KEY'], algorithm='HS256')
+        return token
+    else:
+        return Response('', 401, mimetype='application/json')
+
+    
 
 #GET /books
 @app.route('/books')
