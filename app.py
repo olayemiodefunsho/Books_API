@@ -4,6 +4,8 @@ from settings import *
 import json
 import jwt, datetime
 from UserModel import *
+from functools import wraps
+
 
 app.config['SECRET_KEY'] = 'meow'
 
@@ -28,23 +30,28 @@ def get_token():
     else:
         return Response('', 401, mimetype='application/json')
 
-    
+def token_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        token = request.args.get('token')
+        try:
+            jwt.decode(token, app.config['SECRET_KEY'])
+            return f(*args, **kwargs)
+        except:
+            return jsonify({'error': 'Need a valid token to view this page'}), 401
+    return wrapper
 
 #GET /books
 @app.route('/books')
+@token_required
 def get_books():
-    token = request.args.get('token')
-    try:
-        jwt.decode(token, app.config['SECRET_KEY'])
-    except:
-        return jsonify({'error': 'Need a valid token to view this page'}), 401
-    return jsonify({'books' : Book.get_all_books()})
+    
+    return jsonify({'error': 'Need a valid token to view this page'}), 401
 
 @app.route('/books/<int:isbn>')
 def get_book_by_isbn(isbn):
     return_value = Book.get_book(isbn)
     return jsonify(return_value)
-
 
 @app.route('/books', methods=['POST'])
 def add_book():
